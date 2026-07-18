@@ -12,14 +12,30 @@ HEADERS = {
 
 
 def get_player(tag):
-    tag = tag.replace("#", "%23")
+    if not API_TOKEN:
+        print("❌ COC_API_TOKEN environment variable is not set.")
+        return None
 
-    response = requests.get(
-        f"{BASE_URL}/players/{tag}",
-        headers=HEADERS
-    )
+    tag = tag.strip().upper()
 
-    if response.status_code == 200:
-        return response.json()
+    if tag.startswith("#"):
+        tag = tag[1:]
 
-    return None
+    url = f"{BASE_URL}/players/%23{tag}"
+
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=15)
+
+        print(f"🌐 Request: {url}")
+        print(f"📡 Status: {response.status_code}")
+
+        if response.status_code == 200:
+            return response.json()
+
+        print("❌ API Error:")
+        print(response.text)
+        return None
+
+    except Exception as e:
+        print(f"❌ Request failed: {e}")
+        return None
