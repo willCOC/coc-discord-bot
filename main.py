@@ -1,5 +1,5 @@
-
 import os
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -8,6 +8,18 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 intents = discord.Intents.default()
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+
+async def print_public_ip():
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://api.ipify.org") as response:
+                ip = await response.text()
+                print("=" * 40)
+                print(f"🌐 Railway Public IP: {ip}")
+                print("=" * 40)
+    except Exception as e:
+        print(f"❌ Could not get public IP: {e}")
 
 
 @bot.event
@@ -20,6 +32,8 @@ async def on_ready():
         print(f"✅ Synced {len(synced)} slash commands.")
     except Exception as e:
         print(f"❌ Failed to sync commands: {e}")
+
+    await print_public_ip()
 
     print("🤖 ClanHQ is online!")
     print("=" * 40)
