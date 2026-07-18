@@ -1,40 +1,64 @@
 import discord
-
-# Stores who is IN or OUT (temporary - resets if the bot restarts)
-war_signups = {}
+from database import save_signup, get_signups
 
 
 class WarSignupView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
+    async def update_message(self, interaction):
+        signups = get_signups()
+
+        in_players = []
+        out_players = []
+
+        for username, status in signups:
+            if status == "IN":
+                in_players.append(f"• {username}")
+            else:
+                out_players.append(f"• {username}")
+
+        embed = discord.Embed(
+            title="⚔️ Clan War Signup",
+            colour=discord.Colour.red()
+        )
+
+        embed.add_field(
+            name=f"✅ IN ({len(in_players)})",
+            value="\n".join(in_players) if in_players else "Nobody yet.",
+            inline=True
+        )
+
+        embed.add_field(
+            name=f"❌ OUT ({len(out_players)})",
+            value="\n".join(out_players) if out_players else "Nobody yet.",
+            inline=True
+        )
+
+        await interaction.message.edit(embed=embed, view=self)
+
     @discord.ui.button(label="✅ I'm In", style=discord.ButtonStyle.success)
     async def join_war(self, interaction: discord.Interaction, button: discord.ui.Button):
-        war_signups[interaction.user.id] = "IN"
-        await interaction.response.send_message(
-            "✅ You have been signed up for the next war!",
-            ephemeral=True
-        )
+        save_signup(interaction.user.id, interaction.user.display_name, "IN")
+        await interaction.response.defer()
+        await self.update_message(interaction)
 
     @discord.ui.button(label="❌ I'm Out", style=discord.ButtonStyle.danger)
     async def leave_war(self, interaction: discord.Interaction, button: discord.ui.Button):
-        war_signups[interaction.user.id] = "OUT"
-        await interaction.response.send_message(
-            "❌ You have been removed from the next war.",
-            ephemeral=True
-        )
+        save_signup(interaction.user.id, interaction.user.display_name, "OUT")
+        await interaction.response.defer()
+        await self.update_message(interaction)
 
 
 async def post_signup(interaction: discord.Interaction):
     embed = discord.Embed(
         title="⚔️ Clan War Signup",
-        description=(
-            "Click a button below to let the leaders know if you're available.\n\n"
-            "✅ = I'm In\n"
-            "❌ = I'm Out"
-        ),
+        description="Choose your availability below.",
         colour=discord.Colour.red()
     )
+
+    embed.add_field(name="✅ IN (0)", value="Nobody yet.", inline=True)
+    embed.add_field(name="❌ OUT (0)", value="Nobody yet.", inline=True)
 
     await interaction.response.send_message(
         embed=embed,
