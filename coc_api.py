@@ -1,19 +1,23 @@
 import os
 import requests
 
+BASE_URL = "https://api.clashofclans.com/v1"
+
 API_TOKEN = os.getenv("COC_API_TOKEN")
 
 HEADERS = {
-    "Authorization": f"Bearer {API_TOKEN}"
+    "Authorization": f"Bearer {API_TOKEN}",
+    "Accept": "application/json"
 }
 
 
-def get_player(player_tag):
-    player_tag = player_tag.replace("#", "%23")
+def get_player(tag):
+    tag = tag.replace("#", "%23")
 
-    url = f"https://api.clashofclans.com/v1/players/{player_tag}"
-
-    response = requests.get(url, headers=HEADERS)
+    response = requests.get(
+        f"{BASE_URL}/players/{tag}",
+        headers=HEADERS
+    )
 
     if response.status_code == 200:
         return response.json()
