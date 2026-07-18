@@ -1,12 +1,11 @@
 import discord
 from database import save_signup, get_signups
 
-
 class WarSignupView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    async def update_message(self, interaction):
+    async def refresh(self, interaction):
         signups = get_signups()
 
         in_players = []
@@ -20,6 +19,7 @@ class WarSignupView(discord.ui.View):
 
         embed = discord.Embed(
             title="⚔️ Clan War Signup",
+            description="Click a button below to choose your status.",
             colour=discord.Colour.red()
         )
 
@@ -38,27 +38,49 @@ class WarSignupView(discord.ui.View):
         await interaction.message.edit(embed=embed, view=self)
 
     @discord.ui.button(label="✅ I'm In", style=discord.ButtonStyle.success)
-    async def join_war(self, interaction: discord.Interaction, button: discord.ui.Button):
-        save_signup(interaction.user.id, interaction.user.display_name, "IN")
+    async def join(self, interaction: discord.Interaction, button: discord.ui.Button):
+        save_signup(
+            interaction.user.id,
+            interaction.user.display_name,
+            "IN"
+        )
+
         await interaction.response.defer()
-        await self.update_message(interaction)
+
+        await self.refresh(interaction)
 
     @discord.ui.button(label="❌ I'm Out", style=discord.ButtonStyle.danger)
-    async def leave_war(self, interaction: discord.Interaction, button: discord.ui.Button):
-        save_signup(interaction.user.id, interaction.user.display_name, "OUT")
+    async def leave(self, interaction: discord.Interaction, button: discord.ui.Button):
+        save_signup(
+            interaction.user.id,
+            interaction.user.display_name,
+            "OUT"
+        )
+
         await interaction.response.defer()
-        await self.update_message(interaction)
+
+        await self.refresh(interaction)
 
 
 async def post_signup(interaction: discord.Interaction):
+
     embed = discord.Embed(
         title="⚔️ Clan War Signup",
-        description="Choose your availability below.",
+        description="Click a button below to choose your status.",
         colour=discord.Colour.red()
     )
 
-    embed.add_field(name="✅ IN (0)", value="Nobody yet.", inline=True)
-    embed.add_field(name="❌ OUT (0)", value="Nobody yet.", inline=True)
+    embed.add_field(
+        name="✅ IN (0)",
+        value="Nobody yet.",
+        inline=True
+    )
+
+    embed.add_field(
+        name="❌ OUT (0)",
+        value="Nobody yet.",
+        inline=True
+    )
 
     await interaction.response.send_message(
         embed=embed,
