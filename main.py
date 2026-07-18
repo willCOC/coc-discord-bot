@@ -1,25 +1,13 @@
 import os
-import aiohttp
 import discord
 from discord.ext import commands
+from coc_api import get_player
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-
-
-async def print_public_ip():
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://api.ipify.org") as response:
-                ip = await response.text()
-                print("=" * 40)
-                print(f"🌐 Railway Public IP: {ip}")
-                print("=" * 40)
-    except Exception as e:
-        print(f"❌ Could not get public IP: {e}")
 
 
 @bot.event
@@ -33,8 +21,6 @@ async def on_ready():
     except Exception as e:
         print(f"❌ Failed to sync commands: {e}")
 
-    await print_public_ip()
-
     print("🤖 ClanHQ is online!")
     print("=" * 40)
 
@@ -45,12 +31,57 @@ async def ping(interaction: discord.Interaction):
 
 
 @bot.tree.command(name="help", description="Show ClanHQ commands")
-async def help_command(interaction: discord.Interaction):
+async def help(interaction: discord.Interaction):
     await interaction.response.send_message(
         "**🤖 ClanHQ Commands**\n\n"
-        "🏓 `/ping` - Check if the bot is online\n"
-        "❓ `/help` - Show this help menu"
+        "🏓 /ping\n"
+        "❓ /help\n"
+        "👤 /player"
     )
+
+
+@bot.tree.command(name="player", description="View a Clash of Clans player")
+async def player(interaction: discord.Interaction, tag: str):
+
+    await interaction.response.defer()
+
+    data = get_player(tag)
+
+    if not data:
+        await interaction.followup.send("❌ Player not found.")
+        return
+
+    embed = discord.Embed(
+        title=data["name"],
+        colour=discord.Colour.green()
+    )
+
+    embed.add_field(
+        name="🏰 Town Hall",
+        value=data["townHallLevel"],
+        inline=True
+    )
+
+    embed.add_field(
+        name="🏆 Trophies",
+        value=data["trophies"],
+        inline=True
+    )
+
+    embed.add_field(
+        name="⭐ XP Level",
+        value=data["expLevel"],
+        inline=True
+    )
+
+    if "clan" in data:
+        embed.add_field(
+            name="🛡️ Clan",
+            value=data["clan"]["name"],
+            inline=False
+        )
+
+    await interaction.followup.send(embed=embed)
 
 
 if not TOKEN:
