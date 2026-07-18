@@ -2,6 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from coc_api import get_player
+from war_signup import post_signup
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -36,7 +37,8 @@ async def help(interaction: discord.Interaction):
         "**🤖 ClanHQ Commands**\n\n"
         "🏓 /ping\n"
         "❓ /help\n"
-        "👤 /player"
+        "👤 /player\n"
+        "⚔️ /warsignup"
     )
 
 
@@ -48,7 +50,9 @@ async def player(interaction: discord.Interaction, tag: str):
     data = get_player(tag)
 
     if not data:
-        await interaction.followup.send("❌ Player not found.")
+        await interaction.followup.send(
+            "❌ Player not found or the Clash API is unavailable."
+        )
         return
 
     embed = discord.Embed(
@@ -82,6 +86,11 @@ async def player(interaction: discord.Interaction, tag: str):
         )
 
     await interaction.followup.send(embed=embed)
+
+
+@bot.tree.command(name="warsignup", description="Create a war signup message")
+async def warsignup(interaction: discord.Interaction):
+    await post_signup(interaction)
 
 
 if not TOKEN:
